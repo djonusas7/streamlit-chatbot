@@ -3,3 +3,6 @@ openai
 PyPDF2
 tiktoken
 langchain
+pandas
+python-docx
+
