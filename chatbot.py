@@ -20,8 +20,8 @@ client = OpenAI(api_key=api_key)
 st.title("Team Document Chatbot")
 st.markdown("Ask questions about the stored documents!")
 
-# Folder where documents are stored
-DOCUMENTS_FOLDER = "\\ad\dfs\Shared Data\MCI CI Performance Analyst\OI Automation Committee\PoW\chat_bot\documents"
+# Folder where documents are stored (Fixed Path Formatting)
+DOCUMENTS_FOLDER = r"\\ad\dfs\Shared Data\MCI CI Performance Analyst\OI Automation Committee\PoW\chat_bot\documents"
 
 # PDF Text Extraction
 def extract_text_from_pdf(file_path):
@@ -56,6 +56,11 @@ def chunk_text(text, chunk_size=1000, chunk_overlap=200):
 if "doc_chunks" not in st.session_state:
     st.session_state.doc_chunks = []
     document_list = []
+
+    # Ensure the folder exists and is accessible
+    if not os.path.exists(DOCUMENTS_FOLDER):
+        st.error(f"Error: The folder '{DOCUMENTS_FOLDER}' does not exist or is not accessible.")
+        st.stop()
 
     for filename in os.listdir(DOCUMENTS_FOLDER):
         file_path = os.path.join(DOCUMENTS_FOLDER, filename)
