@@ -1,11 +1,11 @@
 streamlit
 openai
-PyPDF2
+pypdf2
 tiktoken
-langchain
 pandas
 python-docx
 openpyxl
+langchain
 
 
 

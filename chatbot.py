@@ -6,6 +6,7 @@ import pandas as pd
 import docx
 import openpyxl
 import os
+import subprocess
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 
 # Ask the user for an OpenAI API Key
@@ -20,8 +21,33 @@ client = OpenAI(api_key=api_key)
 st.title("Team Document Chatbot")
 st.markdown("Ask questions about the stored documents!")
 
-# Folder where documents are stored (Fixed Path Formatting)
-DOCUMENTS_FOLDER = r"\\ad\dfs\Shared Data\MCI CI Performance Analyst\OI Automation Committee\PoW\chat_bot\documents"
+# Define network folder path
+NETWORK_FOLDER = r"\\ad\dfs\Shared Data\MCI CI Performance Analyst\OI Automation Committee\PoW\chat_bot\documents"
+MAPPED_DRIVE = "Z:"
+
+# Function to unmap and remap Z: drive
+def remap_drive(drive_letter, network_path):
+    try:
+        subprocess.run(["net", "use", drive_letter, "/delete"], check=False, shell=True)  # Unmap if already exists
+        subprocess.run(["net", "use", drive_letter, network_path], check=True, shell=True)  # Remap
+        st.success(f"✅ Network drive remapped to {drive_letter}")
+    except subprocess.CalledProcessError as e:
+        st.error(f"🚨 Failed to map network drive: {e}")
+        st.stop()
+
+# Always remap Z: to ensure it points to the correct location
+remap_drive(MAPPED_DRIVE, NETWORK_FOLDER)
+
+# Use the mapped drive instead of the UNC path
+DOCUMENTS_FOLDER = os.path.join(MAPPED_DRIVE, '')
+
+# Check if folder exists
+st.write(f"Checking folder path: {DOCUMENTS_FOLDER}")
+if not os.path.exists(DOCUMENTS_FOLDER):
+    st.error(f"🚨 Error: The folder '{DOCUMENTS_FOLDER}' does not exist or is not accessible.")
+    st.stop()
+else:
+    st.success(f"✅ Folder is accessible: {DOCUMENTS_FOLDER}")
 
 # PDF Text Extraction
 def extract_text_from_pdf(file_path):
@@ -56,11 +82,6 @@ def chunk_text(text, chunk_size=1000, chunk_overlap=200):
 if "doc_chunks" not in st.session_state:
     st.session_state.doc_chunks = []
     document_list = []
-
-    # Ensure the folder exists and is accessible
-    if not os.path.exists(DOCUMENTS_FOLDER):
-        st.error(f"Error: The folder '{DOCUMENTS_FOLDER}' does not exist or is not accessible.")
-        st.stop()
 
     for filename in os.listdir(DOCUMENTS_FOLDER):
         file_path = os.path.join(DOCUMENTS_FOLDER, filename)
