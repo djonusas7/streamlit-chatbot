@@ -4,6 +4,7 @@ import PyPDF2
 import tiktoken
 import pandas as pd
 import docx
+import openpyxl
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 
 # Ask the user for an OpenAI API Key
@@ -42,7 +43,7 @@ def extract_text_from_docx(uploaded_file):
 
 # Excel Extraction (Extract text from all sheets)
 def extract_text_from_xlsx(uploaded_file):
-    xls = pd.ExcelFile(uploaded_file)
+    xls = pd.ExcelFile(uploaded_file, engine="openpyxl")
     text = ""
     for sheet_name in xls.sheet_names:
         df = xls.parse(sheet_name)
