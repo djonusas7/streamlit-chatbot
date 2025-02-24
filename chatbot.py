@@ -2,6 +2,8 @@ import streamlit as st
 from openai import OpenAI
 import PyPDF2
 import tiktoken
+import pandas as pd
+import docx
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 
 # Ask the user for an OpenAI API Key
@@ -17,7 +19,7 @@ st.title("Team Document Chatbot")
 st.markdown("Upload a document and ask questions about it!")
 
 # File Uploader
-uploaded_file = st.file_uploader("Upload a PDF", type=["pdf"])
+uploaded_file = st.file_uploader("Upload a document", type=["pdf", "docx", "xlsx"])
 
 # Tokenizer for counting tokens
 def num_tokens(text):
@@ -32,6 +34,21 @@ def extract_text_from_pdf(uploaded_file):
         text += page.extract_text() + "\n"
     return text
 
+# Word Document Text Extraction
+def extract_text_from_docx(uploaded_file):
+    doc = docx.Document(uploaded_file)
+    text = "\n".join([para.text for para in doc.paragraphs])
+    return text
+
+# Excel Extraction (Extract text from all sheets)
+def extract_text_from_xlsx(uploaded_file):
+    xls = pd.ExcelFile(uploaded_file)
+    text = ""
+    for sheet_name in xls.sheet_names:
+        df = xls.parse(sheet_name)
+        text += df.to_string(index=False) + "\n"
+    return text
+
 # Text Chunking
 def chunk_text(text, chunk_size=1000, chunk_overlap=200):
     text_splitter = RecursiveCharacterTextSplitter(
@@ -40,7 +57,18 @@ def chunk_text(text, chunk_size=1000, chunk_overlap=200):
     return text_splitter.split_text(text)
 
 if uploaded_file:
-    raw_text = extract_text_from_pdf(uploaded_file)
+    file_type = uploaded_file.name.split(".")[-1]
+    
+    if file_type == "pdf":
+        raw_text = extract_text_from_pdf(uploaded_file)
+    elif file_type == "docx":
+        raw_text = extract_text_from_docx(uploaded_file)
+    elif file_type == "xlsx":
+        raw_text = extract_text_from_xlsx(uploaded_file)
+    else:
+        st.error("Unsupported file format.")
+        st.stop()
+    
     chunks = chunk_text(raw_text)
     st.success(f"Extracted text and split into {len(chunks)} chunks.")
 
